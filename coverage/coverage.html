@@ -1,0 +1,614 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>rest: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/soerjadi/short/cmd/rest/app.go (0.0%)</option>
+				
+				<option value="file1">github.com/soerjadi/short/internal/config/config.go (0.0%)</option>
+				
+				<option value="file2">github.com/soerjadi/short/internal/config/type.go (0.0%)</option>
+				
+				<option value="file3">github.com/soerjadi/short/internal/delivery/rest/loader.go (0.0%)</option>
+				
+				<option value="file4">github.com/soerjadi/short/internal/delivery/rest/url/init.go (0.0%)</option>
+				
+				<option value="file5">github.com/soerjadi/short/internal/log/log.go (46.4%)</option>
+				
+				<option value="file6">github.com/soerjadi/short/internal/repository/url/init.go (71.4%)</option>
+				
+				<option value="file7">github.com/soerjadi/short/internal/repository/url/queries.go (100.0%)</option>
+				
+				<option value="file8">github.com/soerjadi/short/internal/repository/url/repository.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "context"
+        "fmt"
+
+        "net/http"
+        "os"
+        "os/signal"
+        "time"
+
+        "github.com/gorilla/mux"
+        "github.com/jmoiron/sqlx"
+        _ "github.com/lib/pq"
+        "github.com/soerjadi/short/internal/config"
+        "github.com/soerjadi/short/internal/delivery/rest"
+        "github.com/soerjadi/short/internal/log"
+)
+
+func main() <span class="cov0" title="0">{
+        cfg, err := config.Init()
+        if err != nil </span><span class="cov0" title="0">{
+                log.ErrorWithFields("[Config] error reading config from file", log.KV{
+                        "err": err,
+                })
+                return
+        }</span>
+
+        // open database connection
+        <span class="cov0" title="0">dataSource := fmt.Sprintf("user=%s password=%s        host=%s port=%s dbname=%s sslmode=disable",
+                cfg.Database.User,
+                cfg.Database.Password,
+                cfg.Database.Host,
+                cfg.Database.Port,
+                cfg.Database.Name,
+        )
+
+        db, err := sqlx.Open(cfg.Database.Driver, dataSource)
+        if err != nil </span><span class="cov0" title="0">{
+                log.ErrorWithFields("cannot connect to db", log.KV{"error": err})
+                return
+        }</span>
+
+        <span class="cov0" title="0">handlers, err := initiateHandler(cfg, db)
+        if err != nil </span><span class="cov0" title="0">{
+                log.ErrorWithFields("unable to initiate handler.", log.KV{
+                        "err": err,
+                })
+                return
+        }</span>
+
+        <span class="cov0" title="0">r := mux.NewRouter()
+        rest.RegisterHandlers(r, handlers...)
+
+        srv := &amp;http.Server{
+                Addr:         fmt.Sprintf("0.0.0.0:%s", cfg.Server.Port),
+                WriteTimeout: time.Second * 15,
+                ReadTimeout:  time.Second * 15,
+                IdleTimeout:  time.Second * 60,
+                Handler:      r, // Pass our instance of gorilla/mux in.
+        }
+
+        log.Info(fmt.Sprintf("Server running in port : %s", cfg.Server.Port))
+
+        // Run our server in a goroutine so that it doesn't block.
+        go func() </span><span class="cov0" title="0">{
+                if err := srv.ListenAndServe(); err != nil </span><span class="cov0" title="0">{
+                        log.ErrorWithFields("error running apps", log.KV{
+                                "err": err,
+                        })
+                }</span>
+        }()
+
+        <span class="cov0" title="0">c := make(chan os.Signal, 1)
+        // We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
+        // SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
+        signal.Notify(c, os.Interrupt)
+
+        // Block until we receive our signal.
+        &lt;-c
+
+        // Create a deadline to wait  for.
+        ctx, cancel := context.WithTimeout(context.Background(), cfg.WaitTimeout())
+        defer cancel()
+        // Doesn't block if no connections, but will otherwise wait
+        // until the timeout deadline.
+        srv.Shutdown(ctx)
+        // Optionally, you could run srv.Shutdown in a goroutine and block on
+        // &lt;-ctx.Done() if your application should wait for other services
+        // to finalize based on context cancellation.
+        log.Info("shutting down")
+        os.Exit(0)</span>
+}
+
+func initiateHandler(cfg *config.Config, db *sqlx.DB) ([]rest.API, error) <span class="cov0" title="0">{
+        return []rest.API{}, nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package config
+
+import (
+        "io/ioutil"
+
+        "gopkg.in/gcfg.v1"
+)
+
+func Init() (*Config, error) <span class="cov0" title="0">{
+        cfg = &amp;Config{}
+
+        configFilePath := "../../files/config.ini"
+
+        config, err := ioutil.ReadFile(configFilePath)
+        if err != nil </span><span class="cov0" title="0">{
+                return cfg, err
+        }</span>
+
+        <span class="cov0" title="0">err = gcfg.ReadStringInto(cfg, string(config))
+        if err != nil </span><span class="cov0" title="0">{
+                return cfg, err
+        }</span>
+
+        <span class="cov0" title="0">return cfg, nil</span>
+}
+
+// GetConfig returns config object
+func GetConfig() *Config <span class="cov0" title="0">{
+        return cfg
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package config
+
+import "time"
+
+var cfg *Config
+
+type Config struct {
+        Server   Server
+        Database DatabaseConfig
+}
+
+type Server struct {
+        Port        string
+        WaitTimeout int
+}
+
+type DatabaseConfig struct {
+        Name     string
+        Driver   string
+        Host     string
+        Port     string
+        User     string
+        Password string
+        SSL      string
+}
+
+func (c Config) WaitTimeout() time.Duration <span class="cov0" title="0">{
+        return time.Duration(c.Server.WaitTimeout)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package rest
+
+import "github.com/gorilla/mux"
+
+func RegisterHandlers(r *mux.Router, handlers ...API) <span class="cov0" title="0">{
+        for i := (0); i &lt; len(handlers); i++ </span><span class="cov0" title="0">{
+                handlers[i].RegisterRoutes(r)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package url
+
+import (
+        "github.com/gorilla/mux"
+        "github.com/soerjadi/short/internal/delivery/rest"
+)
+
+func NewHandler() rest.API <span class="cov0" title="0">{
+        return &amp;Handler{}
+}</span>
+
+func (h *Handler) RegisterRoutes(r *mux.Router) {<span class="cov0" title="0">
+        // url := r.PathPrefix("/")
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package log
+
+import (
+        "fmt"
+        "io"
+        "os"
+
+        "github.com/rs/zerolog"
+)
+
+var (
+        logger = NewZeroLogger(&amp;Config{Level: InfoLevel})
+)
+
+func NewZeroLogger(cfg *Config) zerolog.Logger <span class="cov1" title="1">{
+        var (
+                zrLog  zerolog.Logger
+                writer io.Writer = os.Stderr
+        )
+
+        zerolog.TimestampFieldName = "time"
+        zerolog.MessageFieldName = "msg"
+        zerolog.CallerFieldName = "line"
+        zerolog.ErrorFieldName = "err"
+        zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+        zrLog = zerolog.New(writer).With().Logger()
+        zrLog = setLevel(zrLog, cfg.Level)
+        return zrLog
+}</span>
+
+func setLevel(zrLog zerolog.Logger, level Level) zerolog.Logger <span class="cov1" title="1">{
+        switch level </span>{
+        case TraceLevel:<span class="cov0" title="0">
+                zrLog = zrLog.Level(zerolog.TraceLevel)</span>
+        case DebugLevel:<span class="cov0" title="0">
+                zrLog = zrLog.Level(zerolog.DebugLevel)</span>
+        case InfoLevel:<span class="cov1" title="1">
+                zrLog = zrLog.Level(zerolog.InfoLevel)</span>
+        case WarnLevel:<span class="cov0" title="0">
+                zrLog = zrLog.Level(zerolog.WarnLevel)</span>
+        case ErrorLevel:<span class="cov0" title="0">
+                zrLog = zrLog.Level(zerolog.ErrorLevel)</span>
+        case FatalLevel:<span class="cov0" title="0">
+                zrLog = zrLog.Level(zerolog.FatalLevel)</span>
+        default:<span class="cov0" title="0">
+                zrLog = zrLog.Level(zerolog.InfoLevel)</span>
+        }
+        <span class="cov1" title="1">return zrLog</span>
+}
+
+func Debug(args ...interface{}) <span class="cov0" title="0">{
+        logger.Debug().Timestamp().Msg(fmt.Sprintln(args...))
+}</span>
+
+func DebugWithFields(msg string, fields KV) <span class="cov0" title="0">{
+        logger.Debug().Timestamp().Fields(fields).Msg(msg)
+}</span>
+
+func Info(args ...interface{}) <span class="cov0" title="0">{
+        logger.Info().Timestamp().Msg(fmt.Sprintln(args...))
+}</span>
+
+func InfoWithFields(msg string, fields KV) <span class="cov0" title="0">{
+        logger.Info().Timestamp().Fields(fields).Msg(msg)
+}</span>
+
+func Warn(args ...interface{}) <span class="cov0" title="0">{
+        logger.Warn().Timestamp().Msg(fmt.Sprintln(args...))
+}</span>
+
+func WarnWithFields(msg string, fields KV) <span class="cov0" title="0">{
+        logger.Warn().Timestamp().Fields(fields).Msg(msg)
+}</span>
+
+func Error(args ...interface{}) <span class="cov0" title="0">{
+        logger.Error().Timestamp().Msg(fmt.Sprintln(args...))
+}</span>
+
+func ErrorWithFields(msg string, fields KV) <span class="cov10" title="5">{
+        logger.Error().Timestamp().Fields(fields).Msg(msg)
+}</span>
+
+func Fatal(args ...interface{}) <span class="cov0" title="0">{
+        logger.Fatal().Timestamp().Msg(fmt.Sprintln())
+}</span>
+
+func FatalWithFields(msg string, fields KV) <span class="cov0" title="0">{
+        logger.Fatal().Timestamp().Fields(fields).Msg(msg)
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package url
+
+import (
+        "github.com/jmoiron/sqlx"
+)
+
+func prepareQueries(db *sqlx.DB) (prepareQuery, error) <span class="cov10" title="13">{
+        var (
+                err error
+                q   prepareQuery
+        )
+
+        q.insertQuery, err = db.Preparex(insertQuery)
+        if err != nil </span><span class="cov0" title="0">{
+                return q, err
+        }</span>
+
+        <span class="cov10" title="13">q.getLongURL, err = db.Preparex(getLongURL)
+        if err != nil </span><span class="cov0" title="0">{
+                return q, err
+        }</span>
+
+        <span class="cov10" title="13">q.getShortURL, err = db.Preparex(getShortURL)
+        if err != nil </span><span class="cov0" title="0">{
+                return q, err
+        }</span>
+
+        <span class="cov10" title="13">q.getListedURL, err = db.Preparex(getListedURL)
+        if err != nil </span><span class="cov0" title="0">{
+                return q, err
+        }</span>
+
+        <span class="cov10" title="13">q.deleteURL, err = db.Preparex(deleteURL)
+        if err != nil </span><span class="cov0" title="0">{
+                return q, err
+        }</span>
+
+        <span class="cov10" title="13">return q, err</span>
+
+}
+
+func GetRepository(db *sqlx.DB) (Repository, error) <span class="cov1" title="1">{
+        query, err := prepareQueries(db)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov1" title="1">return &amp;urlRepository{
+                DB:    db,
+                query: query,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package url
+
+import (
+        "context"
+        "strconv"
+        "strings"
+)
+
+func buildQueries(ctx context.Context, req buildQueryParam) buildQueryResult <span class="cov10" title="3">{
+        var (
+                query     strings.Builder
+                result    buildQueryResult
+                arguments []interface{}
+                where     []string
+        )
+
+        query.WriteString(req.query)
+
+        if req.req.Query != nil </span><span class="cov1" title="1">{
+                arguments = append(arguments, req.req.Query)
+
+                argumentLength := "$" + strconv.Itoa(len(arguments))
+
+                where = append(where, "domain = %s OR domain_ext = %s OR short_url = %s ", argumentLength, argumentLength, argumentLength)
+        }</span>
+
+        <span class="cov10" title="3">if req.req.SSL != nil </span><span class="cov1" title="1">{
+                arguments = append(arguments, req.req.SSL)
+
+                where = append(where, "is_ssl = %s ", "$"+strconv.Itoa(len(arguments)))
+        }</span>
+
+        <span class="cov10" title="3">if len(where) &gt; 0 </span><span class="cov1" title="1">{
+                query.WriteString(" WHERE " + strings.Join(where, " AND "))
+        }</span>
+
+        <span class="cov10" title="3">query.WriteString("ORDER BY created_at DESC")
+
+        result.args = arguments
+        result.query = query.String()
+
+        return result</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package url
+
+import (
+        "context"
+
+        "github.com/soerjadi/short/internal/log"
+        "github.com/soerjadi/short/internal/model"
+)
+
+func (r *urlRepository) GetLongURL(ctx context.Context, longURL string) (model.URL, error) <span class="cov6" title="2">{
+        var res model.URL
+
+        err := r.query.getLongURL.GetContext(ctx, &amp;res, longURL)
+        if err != nil </span><span class="cov1" title="1">{
+                log.ErrorWithFields("repository.url.GetLongURL failed to get context", log.KV{
+                        "err":     err,
+                        "longURL": longURL,
+                })
+
+                return model.URL{}, err
+        }</span>
+
+        <span class="cov1" title="1">return res, nil</span>
+}
+
+func (r *urlRepository) GetShortURL(ctx context.Context, shortURL string) (model.URL, error) <span class="cov6" title="2">{
+        var res model.URL
+
+        err := r.query.getShortURL.GetContext(ctx, &amp;res, shortURL)
+        if err != nil </span><span class="cov1" title="1">{
+                log.ErrorWithFields("repository.url.GetShortURL failed to get context", log.KV{
+                        "err":      err,
+                        "shortURL": shortURL,
+                })
+
+                return model.URL{}, err
+        }</span>
+
+        <span class="cov1" title="1">return res, nil</span>
+}
+
+func (r *urlRepository) GetListedURL(ctx context.Context, req model.URLRequest) ([]model.URL, error) <span class="cov10" title="3">{
+        var dbRes []model.URL
+
+        param := buildQueryParam{
+                query: getListedURL,
+                req:   req,
+        }
+
+        q := buildQueries(ctx, param)
+
+        err := r.DB.SelectContext(ctx, &amp;dbRes, q.query, q.args...)
+        if err != nil </span><span class="cov1" title="1">{
+                log.ErrorWithFields("repository.url.GetListedURL fail select context", log.KV{
+                        "err":   err,
+                        "args":  q.args,
+                        "query": q.query,
+                })
+
+                return []model.URL{}, err
+        }</span>
+
+        <span class="cov6" title="2">return dbRes, nil</span>
+}
+
+func (r *urlRepository) InsertShortURL(ctx context.Context, url model.URL) (model.URL, error) <span class="cov6" title="2">{
+        var (
+                err error
+                res model.URL
+        )
+
+        if err = r.query.insertQuery.GetContext(
+                ctx,
+                &amp;res,
+                url.ID,
+                url.LongURL,
+                url.ShortURL,
+                url.Domain,
+                url.DomainExt,
+                url.IsSSL,
+                url.IsAliased,
+        ); err != nil </span><span class="cov1" title="1">{
+                log.ErrorWithFields("repository.url.InsertShortURL failed insert short url", log.KV{
+                        "err":     err,
+                        "request": url,
+                })
+
+                return model.URL{}, err
+        }</span>
+
+        <span class="cov1" title="1">return res, nil</span>
+}
+
+func (r *urlRepository) DeleteShortURL(ctx context.Context, shortURL string) error <span class="cov6" title="2">{
+        var err error
+
+        if _, err = r.query.deleteURL.ExecContext(ctx, shortURL); err != nil </span><span class="cov1" title="1">{
+                log.ErrorWithFields("repository.url.DeleteShortURL failed delete url", log.KV{
+                        "err":      err,
+                        "shortURL": shortURL,
+                })
+                return err
+        }</span>
+
+        <span class="cov1" title="1">return nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

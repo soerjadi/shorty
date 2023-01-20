@@ -1,0 +1,8 @@
+vendor/
+
+.DS_STORE
+
+config.ini
+coverage.out
+
+*.out
