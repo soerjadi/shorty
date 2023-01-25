@@ -3,13 +3,19 @@ package config
 import (
 	"io/ioutil"
 
+	"github.com/soerjadi/short/internal/pkg/util"
 	"gopkg.in/gcfg.v1"
 )
+
+var configFilePaths = map[string]string{
+	"PRODUCTION":  "/etc/shorty/config.ini",
+	"DEVELOPMENT": "../../files/config.ini",
+}
 
 func Init() (*Config, error) {
 	cfg = &Config{}
 
-	configFilePath := "../../files/config.ini"
+	configFilePath := configFilePaths[util.GetENV()]
 
 	config, err := ioutil.ReadFile(configFilePath)
 	if err != nil {

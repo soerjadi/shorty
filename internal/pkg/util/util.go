@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/soerjadi/short/internal/pkg/snowflake"
@@ -55,4 +56,13 @@ func encode(nb uint64, buf *bytes.Buffer, base string) {
 		encode(nb/l, buf, base)
 	}
 	buf.WriteByte(base[nb%l])
+}
+
+func GetENV() string {
+	env := os.Getenv("ENV")
+	if env == "" {
+		return "DEVELOPMENT"
+	}
+
+	return env
 }
