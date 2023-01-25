@@ -6,3 +6,7 @@ config.ini
 coverage.out
 
 *.out
+
+shorty
+app
+rest
