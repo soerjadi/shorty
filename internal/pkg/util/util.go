@@ -43,8 +43,11 @@ func Base62Conversion(nb uint64) string {
 	base := chars
 	var buf bytes.Buffer
 	l := uint64(len(base))
-	if nb/l != 0 {
-		encode(nb/l, &buf, base)
+
+	ll := l * 6
+
+	if nb/ll != 0 {
+		encode(nb/ll, &buf, base)
 	}
 	buf.WriteByte(base[nb%l])
 	return buf.String()
@@ -52,8 +55,10 @@ func Base62Conversion(nb uint64) string {
 
 func encode(nb uint64, buf *bytes.Buffer, base string) {
 	l := uint64(len(base))
-	if nb/l != 0 {
-		encode(nb/l, buf, base)
+	ll := l * 6
+
+	if nb/ll != 0 {
+		encode(nb/ll, buf, base)
 	}
 	buf.WriteByte(base[nb%l])
 }

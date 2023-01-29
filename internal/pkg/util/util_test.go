@@ -19,7 +19,7 @@ func TestGenerateShortURL(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "success",
+			name: "success generating 7 characters",
 			args: args{
 				ctx:     context.TODO(),
 				longUrl: "https://soerja.com/hello-world/",
@@ -47,6 +47,11 @@ func TestGenerateShortURL(t *testing.T) {
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GenerateShortURL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(got.ShortURL) != 7 && !tt.wantErr {
+				t.Errorf("GenerateShortURL() = %v", got)
 				return
 			}
 
